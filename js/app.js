@@ -319,7 +319,14 @@
   // 3. 지도 스튜디오 컨트롤 (5종 맵 모드 + 실시간 효과 + 텔레포트 + 확장 + 타임슬라이더)
   // ==========================================================================
   function bindMapStudioControls() {
-    // 5종 맵 모드 (사이드바 퀵버튼 + 상단 툴바 동기화)
+    // 3D 지구본 / 2D 평면 지도 투영 전환
+    document.querySelectorAll('[data-projection]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (MapEngine) MapEngine.setProjection(btn.dataset.projection);
+      });
+    });
+
+    // 위성/지형 베이스맵 모드 (사이드바 퀵버튼 + 상단 툴바 동기화)
     document.querySelectorAll('[data-map-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
         if (MapEngine) MapEngine.setMode(btn.dataset.mapMode);
@@ -369,10 +376,23 @@
     };
     bindCheck('fx-country-pick', 'countryPick');
     bindCheck('fx-polygons', 'showPolygons');
+    bindCheck('fx-borders', 'showBaseBorders');
     bindCheck('fx-arcs', 'showArcs');
-    bindCheck('fx-atmosphere', 'showAtmosphere');
-    bindCheck('fx-graticules', 'showGraticules');
     bindCheck('fx-autorotate', 'autoRotate');
+
+    const pitchSlider = document.getElementById('fx-pitch');
+    if (pitchSlider) {
+      pitchSlider.addEventListener('input', () => {
+        MapEngine && MapEngine.setEffect('pitch', parseFloat(pitchSlider.value));
+      });
+    }
+
+    const bearingSlider = document.getElementById('fx-bearing');
+    if (bearingSlider) {
+      bearingSlider.addEventListener('input', () => {
+        MapEngine && MapEngine.setEffect('bearing', parseFloat(bearingSlider.value));
+      });
+    }
 
     const opacitySlider = document.getElementById('fx-opacity');
     if (opacitySlider) {
@@ -456,7 +476,7 @@
 
     listEl.innerHTML = countries.map(c => `
       <button class="country-chip ${c.id === selectedCountryId ? 'active' : ''}" data-country-id="${c.id}">
-        ${c.flag} ${c.name.split(' ')[0]}
+        ${c.flagImg || c.flag} <span>${c.name.split(' ')[0]}</span>
       </button>
     `).join('');
 
@@ -490,7 +510,7 @@
         <div class="country-history-head">
           <div>
             <div class="country-title-row">
-              <span class="country-flag-lg">${country.flag}</span>
+              <span class="country-flag-lg">${country.flagImg || country.flag}</span>
               <div>
                 <span class="card-badge" style="color:${country.color}">${country.continent} · 지도 선택 국가 전체 통사</span>
                 <h2 style="font-size:1.3rem;">${country.name} <span style="font-size:0.86rem; color:#a1a1aa; font-weight:500;">(${country.engName})</span></h2>

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -73,11 +73,11 @@
 
       <!-- 사이드바 하단 빠른 지도 전환 -->
       <div class="sidebar-footer">
-        <div class="sidebar-footer-title">빠른 지구본 · 구글 지도 전환</div>
+        <div class="sidebar-footer-title">빠른 3D 지구본 · 위성 전환</div>
         <div class="quick-map-grid">
-          <button class="quick-map-btn active" data-map-mode="3d_day">🌍 3D 주간</button>
-          <button class="quick-map-btn" data-map-mode="3d_night">🌃 3D 야간</button>
-          <button class="quick-map-btn" data-map-mode="google_hybrid">🛰️ 구글 위성</button>
+          <button class="quick-map-btn active" data-projection="globe">🌍 3D 지구본</button>
+          <button class="quick-map-btn" data-projection="mercator">🗺️ 2D 평면</button>
+          <button class="quick-map-btn active" data-map-mode="google_hybrid">🛰️ 구글 위성</button>
           <button class="quick-map-btn" data-map-mode="google_terrain">⛰️ 구글 지형</button>
         </div>
       </div>
@@ -112,15 +112,17 @@
         </div>
         <div class="omni-results" id="omni-results"></div>
 
-        <!-- 인터랙티브 지도 스튜디오 (3D 지구본 + 구글 위성/지형 + 실시간 효과/조작) -->
+        <!-- 인터랙티브 지도 스튜디오 (MapLibre v5 3D 구글 위성 지구본 + Natural Earth 50m 정밀 국경선) -->
         <section class="map-hero" id="map-hero-section">
           <div class="map-toolbar">
             <div class="map-mode-group">
-              <button class="mode-btn active" data-map-mode="3d_day">🌍 3D 주간 지구본</button>
-              <button class="mode-btn" data-map-mode="3d_night">🌃 3D 야간 불빛</button>
-              <button class="mode-btn" data-map-mode="google_hybrid">🛰️ 구글 위성+지명</button>
-              <button class="mode-btn" data-map-mode="google_sat">🗺️ 구글 순수 위성</button>
+              <button class="mode-btn active" data-projection="globe">🌍 3D 지구본</button>
+              <button class="mode-btn" data-projection="mercator">🗺️ 2D 평면 지도</button>
+              <span class="toolbar-divider"></span>
+              <button class="mode-btn active" data-map-mode="google_hybrid">🛰️ 구글 위성+지명</button>
+              <button class="mode-btn" data-map-mode="google_sat">🌎 구글 순수 위성</button>
               <button class="mode-btn" data-map-mode="google_terrain">⛰️ 구글 지형도</button>
+              <button class="mode-btn" data-map-mode="carto_dark">🌑 다크 아틀라스</button>
             </div>
             <div class="map-mode-group">
               <button class="mode-btn" id="btn-map-expand">⛶ 크게 보기</button>
@@ -128,7 +130,7 @@
           </div>
 
           <div class="map-stage-wrapper" id="map-stage-wrapper">
-            <!-- 실시간 지도 효과 & 텔레포트 컨트롤 바 -->
+            <!-- 실시간 지도 효과 & 3D 카메라·텔레포트 컨트롤 바 -->
             <div class="map-fx-bar">
               <div class="fx-group">
                 <label class="fx-toggle" title="지도를 클릭하면 해당 국가의 전체 역사가 열립니다">
@@ -137,36 +139,41 @@
                 <label class="fx-toggle">
                   <input type="checkbox" id="fx-polygons" checked /> 영토
                 </label>
+                <label class="fx-toggle">
+                  <input type="checkbox" id="fx-borders" checked /> 국경선
+                </label>
                 <div class="fx-slider-wrap">
                   <span>투명도</span>
-                  <input type="range" id="fx-opacity" min="0.08" max="0.75" step="0.02" value="0.36" />
+                  <input type="range" id="fx-opacity" min="0.06" max="0.72" step="0.02" value="0.38" />
                 </div>
                 <label class="fx-toggle">
                   <input type="checkbox" id="fx-arcs" checked /> 경로 아크
                 </label>
-                <label class="fx-toggle">
-                  <input type="checkbox" id="fx-atmosphere" checked /> 대기권
-                </label>
-                <label class="fx-toggle">
-                  <input type="checkbox" id="fx-graticules" checked /> 격자선
-                </label>
+                <div class="fx-slider-wrap" title="3D 카메라 기울기(Tilt) — 우클릭 드래그로도 조절 가능">
+                  <span>3D기울기</span>
+                  <input type="range" id="fx-pitch" min="0" max="62" step="2" value="20" />
+                </div>
+                <div class="fx-slider-wrap" title="지도 방위각 회전">
+                  <span>회전</span>
+                  <input type="range" id="fx-bearing" min="-180" max="180" step="5" value="0" />
+                </div>
                 <label class="fx-toggle">
                   <input type="checkbox" id="fx-autorotate" /> 자동공전
                 </label>
                 <div class="fx-slider-wrap">
                   <span>속도</span>
-                  <input type="range" id="fx-rot-speed" min="0.1" max="2.2" step="0.1" value="0.45" />
+                  <input type="range" id="fx-rot-speed" min="0.1" max="2.0" step="0.1" value="0.35" />
                 </div>
-                <select class="fx-select" id="fx-google-filter" title="구글 위성/지형 지도 비주얼 필터">
-                  <option value="normal">구글필터: 기본</option>
-                  <option value="cinematic">구글필터: 시네마틱 다크</option>
-                  <option value="vintage">구글필터: 고지도 세피아</option>
-                  <option value="vivid">구글필터: 선명 위성</option>
+                <select class="fx-select" id="fx-google-filter" title="위성/지형 지도 비주얼 필터">
+                  <option value="normal">필터: 기본</option>
+                  <option value="cinematic">필터: 시네마틱 다크</option>
+                  <option value="vintage">필터: 고지도 세피아</option>
+                  <option value="vivid">필터: 초선명 위성</option>
                 </select>
               </div>
 
               <div class="teleport-group">
-                <button class="teleport-btn" data-teleport="korea">🇰🇷 한반도</button>
+                <button class="teleport-btn" data-teleport="korea">한반도</button>
                 <button class="teleport-btn" data-teleport="east_asia">동아시아</button>
                 <button class="teleport-btn" data-teleport="europe">유럽</button>
                 <button class="teleport-btn" data-teleport="mideast">중동</button>
@@ -175,14 +182,13 @@
               </div>
             </div>
 
-            <!-- 3D / 2D 지도 뷰포트 -->
-            <div class="map-viewport">
-              <div id="globe-container"></div>
-              <div id="leaflet-container" style="display:none;"></div>
+            <!-- MapLibre v5 3D 구글 위성 지구본 뷰포트 -->
+            <div class="map-viewport globe-space-bg">
+              <div id="maplibre-container"></div>
 
               <div class="map-hud">
-                <div class="map-hud-title" id="map-hud-title">역사 · 지리 통합 지구본</div>
-                <div class="map-hud-subtitle" id="map-hud-subtitle">지도에서 원하는 나라를 클릭하거나 아래 시대 스냅샷을 선택해 보세요.</div>
+                <div class="map-hud-title" id="map-hud-title">3D 구글 위성 역사 지구본</div>
+                <div class="map-hud-subtitle" id="map-hud-subtitle">실제 국경선 위에서 원하는 나라를 클릭하거나 아래 시대 스냅샷을 선택해 보세요.</div>
               </div>
 
               <div class="map-legend" id="map-legend"></div>
@@ -327,9 +333,12 @@
     </div>
   </div>
 
-  <!-- 지도 라이브러리 (Globe.gl 3D 지구본 + Leaflet 구글 위성/지형) -->
-  <script src="https://unpkg.com/globe.gl@2.35.1/dist/globe.gl.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 지도 라이브러리 (MapLibre GL JS v5 네이티브 3D 지구본 + TopoJSON 정밀 국경 파서) -->
+  <script src="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+  <!-- Natural Earth 50m 전 세계 241개국 초정밀 국경선 데이터 -->
+  <script src="js/data/world-50m-topo.js"></script>
 
   <!-- 역사·지리 데이터 모듈 -->
   <script src="js/data/civilizations.js"></script>
@@ -337,6 +346,7 @@
   <script src="js/data/timeline.js"></script>
   <script src="js/data/world-wars.js"></script>
   <script src="js/data/countries-history.js"></script>
+  <script src="js/data/geo-borders-map.js"></script>
   <script src="js/data/joseon-kings.js"></script>
   <script src="js/data/korea-rulers.js"></script>
 

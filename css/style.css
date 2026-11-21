@@ -1456,3 +1456,87 @@ button {
   padding: 3px 9px;
   border-radius: 999px;
 }
+
+
+/* ============================================================================
+   MapLibre GL JS v5 3D 구글 위성 지구본 전용 스타일 + 컬러 국기 아이콘
+   ============================================================================ */
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-strong);
+  margin: 0 4px;
+  align-self: center;
+}
+
+.globe-space-bg {
+  background:
+    radial-gradient(circle at 22% 24%, rgba(56, 189, 248, 0.14), transparent 46%),
+    radial-gradient(circle at 78% 76%, rgba(99, 102, 241, 0.12), transparent 48%),
+    radial-gradient(1px 1px at 14% 20%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 82% 18%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1.5px 1.5px at 66% 80%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 30% 82%, rgba(255, 255, 255, 0.6), transparent),
+    #03060f;
+}
+
+#maplibre-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* MapLibre 3D 지구본 & 2D 지도 실시간 비주얼 필터 */
+#maplibre-container.filter-cinematic .maplibregl-canvas {
+  filter: contrast(1.16) brightness(0.86) saturate(0.86);
+}
+
+#maplibre-container.filter-vintage .maplibregl-canvas {
+  filter: sepia(0.5) contrast(1.06) brightness(0.93);
+}
+
+#maplibre-container.filter-vivid .maplibregl-canvas {
+  filter: saturate(1.42) contrast(1.12);
+}
+
+/* MapLibre 팝업 다크 글래스 스타일 */
+.atlas-popup .maplibregl-popup-content {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.atlas-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(17, 17, 20, 0.86) !important;
+  border: 1px solid var(--border-strong) !important;
+  backdrop-filter: blur(8px);
+}
+
+.maplibregl-ctrl-group button {
+  filter: invert(0.92);
+}
+
+/* 선명한 컬러 국기 아이콘 (윈도우 국기 이모지 텍스트 깨짐 해결) */
+.flag-icon {
+  width: 18px;
+  height: 13px;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: -2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.country-flag-lg .flag-icon {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.country-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
